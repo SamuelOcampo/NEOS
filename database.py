@@ -12,6 +12,7 @@ data on NEOs and close approaches extracted by `extract.load_neos` and
 You'll edit this file in Tasks 2 and 3.
 """
 
+
 class NEODatabase:
     """A database of near-Earth objects and their close approaches.
 
@@ -20,6 +21,7 @@ class NEODatabase:
     help fetch NEOs by primary designation or by name and to help speed up
     querying for close approaches that match criteria.
     """
+
     def __init__(self, neos, approaches):
         """Create a new `NEODatabase`.
 
@@ -42,8 +44,15 @@ class NEODatabase:
         self._approaches = approaches
 
         # TODO: What additional auxiliary data structures will be useful?
+        self.neos = {neo.designation: neo for neo in neos}
+        self.neos_by_name = {neo.name: neo for neo in neos}
 
         # TODO: Link together the NEOs and their close approaches.
+        for approach in approaches:
+            designation = approach._designation
+            if designation in self.neos:
+                self.neos[designation].add_approach(approach)
+                approach.link_neo(self.neos[designation])
 
     def get_neo_by_designation(self, designation):
         """Find and return an NEO by its primary designation.
@@ -59,7 +68,7 @@ class NEODatabase:
         :return: The `NearEarthObject` with the desired primary designation, or `None`.
         """
         # TODO: Fetch an NEO by its primary designation.
-        return None
+        return self.neos.get(designation, None) or None
 
     def get_neo_by_name(self, name):
         """Find and return an NEO by its name.
@@ -76,7 +85,7 @@ class NEODatabase:
         :return: The `NearEarthObject` with the desired name, or `None`.
         """
         # TODO: Fetch an NEO by its name.
-        return None
+        return self.neos_by_name.get(name, None) or None
 
     def query(self, filters=()):
         """Query close approaches to generate those that match a collection of filters.
@@ -94,4 +103,5 @@ class NEODatabase:
         """
         # TODO: Generate `CloseApproach` objects that match all of the filters.
         for approach in self._approaches:
-            yield approach
+            if all(filter(approach) for filter in filters):
+                yield approach

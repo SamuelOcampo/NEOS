@@ -17,6 +17,7 @@ iterator.
 You'll edit this file in Tasks 3a and 3c.
 """
 import operator
+from itertools import islice
 
 
 class UnsupportedCriterionError(NotImplementedError):
@@ -38,6 +39,7 @@ class AttributeFilter:
     Concrete subclasses can override the `get` classmethod to provide custom
     behavior to fetch a desired attribute from the given `CloseApproach`.
     """
+
     def __init__(self, op, value):
         """Construct a new `AttributeFilter` from an binary predicate and a reference value.
 
@@ -107,7 +109,39 @@ def create_filters(date=None, start_date=None, end_date=None,
     :return: A collection of filters for use with `query`.
     """
     # TODO: Decide how you will represent your filters.
-    return ()
+    filters = ()
+
+    # Date filters
+    if date:
+        filters += (DateFilter(operator.eq, date),)
+    if start_date:
+        filters += (DateFilter(operator.ge, start_date),)
+    if end_date:
+        filters += (DateFilter(operator.le, end_date),)
+
+    # Distance filters
+    if distance_min:
+        filters += (DistanceFilter(operator.ge, distance_min),)
+    if distance_max:
+        filters += (DistanceFilter(operator.le, distance_max),)
+
+    # Velocity filters
+    if velocity_min:
+        filters += (VelocityFilter(operator.ge, velocity_min),)
+    if velocity_max:
+        filters += (VelocityFilter(operator.le, velocity_max),)
+
+    # Diameter filters
+    if diameter_min:
+        filters += (DiameterFilter(operator.ge, diameter_min),)
+    if diameter_max:
+        filters += (DiameterFilter(operator.le, diameter_max),)
+
+    # Hazardous filter
+    if hazardous != None:
+        filters += (HazardousFilter(operator.eq, hazardous),)
+
+    return filters
 
 
 def limit(iterator, n=None):
@@ -119,5 +153,43 @@ def limit(iterator, n=None):
     :param n: The maximum number of values to produce.
     :yield: The first (at most) `n` values from the iterator.
     """
-    # TODO: Produce at most `n` values from the given iterator.
-    return iterator
+    if n is None or n ==0:
+        return iterator
+    else:
+        return islice(iterator, n)
+
+
+class DateFilter(AttributeFilter):
+    # Date (--date, --start-date, --end-date)
+    @classmethod
+    def get(cls, approach):
+        return approach.time.date()
+
+
+class DistanceFilter(AttributeFilter):
+    # Distance (--min-distance, --max-distance)
+    @classmethod
+    def get(cls, approach):
+        return approach.distance
+
+
+class VelocityFilter(AttributeFilter):
+    # Velocity (--min-velocity, --max-velocity)
+    @classmethod
+    def get(cls, approach):
+        return approach.velocity
+
+
+class DiameterFilter(AttributeFilter):
+    # Diameter (--min-diameter, --max-diameter)
+    @classmethod
+    def get(cls, approach):
+        return approach.neo.diameter
+
+
+class HazardousFilter(AttributeFilter):
+    # Hazardous (--hazardous, --not-hazardous)
+
+    @classmethod
+    def get(cls, approach):
+        return approach.neo.hazardous
